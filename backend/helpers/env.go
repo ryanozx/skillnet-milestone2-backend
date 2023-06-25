@@ -146,7 +146,7 @@ func RetrieveBackendEnv() *BaseEnv {
 
 func SetModelClientAddress() {
 	clientEnv := RetrieveClientEnv()
-	models.ClientAddress = clientEnv.Address()
+	models.ClientAddress = clientEnv.Host
 	log.Println("Set client address to:", models.ClientAddress)
 }
 
