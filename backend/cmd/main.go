@@ -12,7 +12,6 @@ import (
 	ginSess "github.com/gin-contrib/sessions"
 	redisSess "github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 	"github.com/ryanozx/skillnet-milestone2-backend/database"
 	"github.com/ryanozx/skillnet-milestone2-backend/helpers"
 	"google.golang.org/api/option"
@@ -20,10 +19,6 @@ import (
 )
 
 func main() {
-	err := godotenv.Load("./../.env")
-	if err != nil {
-		panic(err)
-	}
 	serverConfig := initialiseProdServer()
 	serverConfig.setupRoutes()
 	serverConfig.runRouter()
