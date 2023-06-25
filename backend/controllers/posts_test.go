@@ -260,7 +260,7 @@ func (s *PostControllerTestSuite) Test_DeletePost_NotOwner() {
 	s.api.DeletePost(c)
 
 	b, _ := io.ReadAll(w.Body)
-	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusUnauthorized, w.Code); !isEqual {
+	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusForbidden, w.Code); !isEqual {
 		s.T().Error(errStr)
 	}
 	m, err := helpers.ParseJSONString(b)
@@ -282,7 +282,7 @@ func (s *PostControllerTestSuite) Test_DeletePost_CannotDelete() {
 	s.api.DeletePost(c)
 
 	b, _ := io.ReadAll(w.Body)
-	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusBadRequest, w.Code); !isEqual {
+	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusInternalServerError, w.Code); !isEqual {
 		s.T().Error(errStr)
 	}
 	m, err := helpers.ParseJSONString(b)
@@ -508,7 +508,7 @@ func (s *PostControllerTestSuite) Test_UpdatePost_NotOwner() {
 	s.api.UpdatePost(c)
 
 	b, _ := io.ReadAll(w.Body)
-	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusUnauthorized, w.Code); !isEqual {
+	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusForbidden, w.Code); !isEqual {
 		s.T().Error(errStr)
 	}
 	m, err := helpers.ParseJSONString(b)
@@ -535,7 +535,7 @@ func (s *PostControllerTestSuite) Test_UpdatePost_CannotUpdate() {
 	s.api.UpdatePost(c)
 
 	b, _ := io.ReadAll(w.Body)
-	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusBadRequest, w.Code); !isEqual {
+	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusInternalServerError, w.Code); !isEqual {
 		s.T().Error(errStr)
 	}
 	m, err := helpers.ParseJSONString(b)

@@ -58,14 +58,14 @@ func (a *APIEnv) DeletePost(ctx *gin.Context) {
 		helpers.OutputError(ctx, http.StatusNotFound, ErrPostNotFound)
 		return
 	}
-	// If user is not the owner of the post, return status code 401 Unauthorized
+	// If user is not the owner of the post, return status code 403 Forbidden
 	if errors.Is(err, database.ErrNotOwner) {
-		helpers.OutputError(ctx, http.StatusUnauthorized, database.ErrNotOwner)
+		helpers.OutputError(ctx, http.StatusForbidden, database.ErrNotOwner)
 		return
 	}
-	// If post cannot be deleted for any other reason, return status code 403 Bad Request
+	// If post cannot be deleted for any other reason, return status code 500 Internal Server Error
 	if err != nil {
-		helpers.OutputError(ctx, http.StatusBadRequest, ErrCannotDeletePost)
+		helpers.OutputError(ctx, http.StatusInternalServerError, ErrCannotDeletePost)
 		return
 	}
 	helpers.OutputMessage(ctx, PostDeletedMsg)
@@ -119,14 +119,14 @@ func (a *APIEnv) UpdatePost(ctx *gin.Context) {
 		helpers.OutputError(ctx, http.StatusNotFound, ErrPostNotFound)
 		return
 	}
-	// If user is not the owner of the post, return status code 401 Unauthorised
+	// If user is not the owner of the post, return status code 403 Forbidden
 	if errors.Is(err, database.ErrNotOwner) {
-		helpers.OutputError(ctx, http.StatusUnauthorized, database.ErrNotOwner)
+		helpers.OutputError(ctx, http.StatusForbidden, database.ErrNotOwner)
 		return
 	}
-	// If post cannot be updated for any other reason, return status code 403 Bad Request
+	// If post cannot be updated for any other reason, return status code 500 Internal Server Error
 	if err != nil {
-		helpers.OutputError(ctx, http.StatusBadRequest, ErrCannotUpdatePost)
+		helpers.OutputError(ctx, http.StatusInternalServerError, ErrCannotUpdatePost)
 		return
 	}
 	helpers.OutputData(ctx, post)
