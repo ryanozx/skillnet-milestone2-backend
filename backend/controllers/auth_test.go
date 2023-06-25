@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/ryanozx/skillnet/helpers"
-	"github.com/ryanozx/skillnet/models"
+	"github.com/ryanozx/skillnet-milestone2-backend/helpers"
+	"github.com/ryanozx/skillnet-milestone2-backend/models"
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/crypto/bcrypt"
 )

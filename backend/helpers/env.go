@@ -6,7 +6,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/ryanozx/skillnet/models"
+	"github.com/ryanozx/skillnet-milestone2-backend/models"
 )
 
 type BaseEnv struct {

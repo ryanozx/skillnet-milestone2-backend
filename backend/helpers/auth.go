@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	"github.com/ryanozx/skillnet/models"
+	"github.com/ryanozx/skillnet-milestone2-backend/models"
 	"golang.org/x/crypto/bcrypt"
 )
 

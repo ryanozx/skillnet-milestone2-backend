@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/ryanozx/skillnet/models"
+	"github.com/ryanozx/skillnet-milestone2-backend/models"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )

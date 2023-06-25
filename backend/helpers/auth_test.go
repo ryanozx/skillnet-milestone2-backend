@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/ryanozx/skillnet/models"
+	"github.com/ryanozx/skillnet-milestone2-backend/models"
 	"github.com/stretchr/testify/suite"
 )
 

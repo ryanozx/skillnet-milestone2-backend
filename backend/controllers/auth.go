@@ -8,8 +8,8 @@ import (
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	"github.com/ryanozx/skillnet/database"
-	"github.com/ryanozx/skillnet/helpers"
+	"github.com/ryanozx/skillnet-milestone2-backend/database"
+	"github.com/ryanozx/skillnet-milestone2-backend/helpers"
 )
 
 func (a *APIEnv) InitialiseAuthHandler() {

@@ -10,9 +10,9 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	"github.com/ryanozx/skillnet/controllers"
-	"github.com/ryanozx/skillnet/helpers"
-	"github.com/ryanozx/skillnet/middleware"
+	"github.com/ryanozx/skillnet-milestone2-backend/controllers"
+	"github.com/ryanozx/skillnet-milestone2-backend/helpers"
+	"github.com/ryanozx/skillnet-milestone2-backend/middleware"
 )
 
 // Sets up the routes on the server router

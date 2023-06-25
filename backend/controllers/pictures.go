@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/ryanozx/skillnet/helpers"
+	"github.com/ryanozx/skillnet-milestone2-backend/helpers"
 )
 
 func (a *APIEnv) PostUserPicture(context *gin.Context) {

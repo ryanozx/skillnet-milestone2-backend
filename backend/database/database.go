@@ -5,8 +5,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/ryanozx/skillnet/helpers"
-	"github.com/ryanozx/skillnet/models"
+	"github.com/ryanozx/skillnet-milestone2-backend/helpers"
+	"github.com/ryanozx/skillnet-milestone2-backend/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"

@@ -1,7 +1,7 @@
 package database
 
 import (
-	"github.com/ryanozx/skillnet/models"
+	"github.com/ryanozx/skillnet-milestone2-backend/models"
 	"gorm.io/gorm"
 )
 

@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/ryanozx/skillnet/database"
-	"github.com/ryanozx/skillnet/helpers"
-	"github.com/ryanozx/skillnet/models"
+	"github.com/ryanozx/skillnet-milestone2-backend/database"
+	"github.com/ryanozx/skillnet-milestone2-backend/helpers"
+	"github.com/ryanozx/skillnet-milestone2-backend/models"
 	"github.com/stretchr/testify/suite"
 	"gopkg.in/guregu/null.v3"
 	"gorm.io/gorm"

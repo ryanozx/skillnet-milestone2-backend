@@ -12,7 +12,7 @@ import (
 	"errors"
 
 	"cloud.google.com/go/storage"
-	"github.com/ryanozx/skillnet/database"
+	"github.com/ryanozx/skillnet-milestone2-backend/database"
 	"gorm.io/gorm"
 )
 
