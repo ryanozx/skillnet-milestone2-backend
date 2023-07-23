@@ -5,11 +5,11 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/ryanozx/skillnet-milestone2-backend/helpers"
+	"github.com/ryanozx/skillnet/helpers"
 )
 
 func (a *APIEnv) PostUserPicture(context *gin.Context) {
-	userID := helpers.GetUserIdFromContext(context)
+	userID := helpers.GetUserIDFromContext(context)
 	// username := helpers.GetUsernameFromContext(context)
 	file, err := context.FormFile("file")
 	if err != nil {

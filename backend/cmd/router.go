@@ -10,9 +10,10 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	"github.com/ryanozx/skillnet-milestone2-backend/controllers"
-	"github.com/ryanozx/skillnet-milestone2-backend/helpers"
-	"github.com/ryanozx/skillnet-milestone2-backend/middleware"
+	"github.com/redis/go-redis/v9"
+	"github.com/ryanozx/skillnet/controllers"
+	"github.com/ryanozx/skillnet/helpers"
+	"github.com/ryanozx/skillnet/middleware"
 )
 
 // Sets up the routes on the server router
@@ -22,7 +23,11 @@ func (s *serverConfig) setupRoutes() {
 	s.router.Use(sessions.Sessions("skillnet", s.store))
 
 	routerGroup := s.RouterGroups()
-	apiEnv := controllers.CreateAPIEnv(s.db, s.GoogleCloud)
+	apiEnv := &controllers.APIEnv{
+		DB:          s.db,
+		GoogleCloud: s.GoogleCloud,
+		NotifRedis:  s.notifRedis,
+	}
 
 	// Sets the ClientAddress and BackendAddress global variables in the models package so that the env file
 	// does not need to be read everytime we require the client address or backend address
@@ -35,19 +40,23 @@ func (s *serverConfig) setupRoutes() {
 	setupUserAPI(routerGroup, apiEnv)
 	setupAuthAPI(routerGroup, apiEnv)
 	setupPhotoAPI(routerGroup, apiEnv)
-	setupLikeAPI(routerGroup, apiEnv)
+	setupLikeAPI(routerGroup, apiEnv, s.likesRedis)
+	setupCommentAPI(routerGroup, apiEnv, s.commentsRedis)
+	setupNotificationAPI(routerGroup, apiEnv, s.notifRedis)
+	setupCommunityAPI(routerGroup, apiEnv)
+	setupProjectAPI(routerGroup, apiEnv)
+	setupSearchAPI(routerGroup, apiEnv)
 }
 
 // Sets up CORS to allow the frontend app to access resources
 func (s *serverConfig) configureCors() {
 	// Get address of frontend app from environmental variables
 	env := helpers.RetrieveClientEnv()
-	localClientAddress := env.Host
+	localClientAddress := env.Address()
 
 	// Set up configuration and apply it to the router
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowOrigins = []string{localClientAddress}
-	log.Println("CORS applied to ", localClientAddress)
 	corsConfig.AllowCredentials = true
 	s.router.Use(cors.New(corsConfig))
 }
@@ -112,14 +121,14 @@ type PostAPIer interface {
 }
 
 func registerPostRoutes(rg RouterGrouper, api PostAPIer) {
-	// Public routes
-	rg.Private().GET("/posts", api.GetPosts)
-	rg.Private().GET("/posts/:id", api.GetPostByID)
+	const postPathWithID = helpers.PostPath + "/:" + helpers.PostIDKey
 
 	// Private routes
-	rg.Private().POST("/posts", api.CreatePost)
-	rg.Private().PATCH("/posts/:id", api.UpdatePost)
-	rg.Private().DELETE("/posts/:id", api.DeletePost)
+	rg.Private().GET(helpers.PostPath, api.GetPosts)
+	rg.Private().GET(postPathWithID, api.GetPostByID)
+	rg.Private().POST(helpers.PostPath, api.CreatePost)
+	rg.Private().PATCH(postPathWithID, api.UpdatePost)
+	rg.Private().DELETE(postPathWithID, api.DeletePost)
 }
 
 // Sets up User API
@@ -141,11 +150,12 @@ type UserAPIer interface {
 }
 
 func registerUserRoutes(rg RouterGrouper, api UserAPIer) {
-	rg.Public().GET("/users/:username", api.GetProfile)
+	const userPath = "/user"
 	rg.Public().POST("/signup", api.CreateUser)
 
-	rg.Private().GET("/user", api.GetSelfProfile)
-	rg.Private().PATCH("/user", api.UpdateUser)
+	rg.Private().GET("/users/:username", api.GetProfile)
+	rg.Private().GET(userPath, api.GetSelfProfile)
+	rg.Private().PATCH(userPath, api.UpdateUser)
 }
 
 // Sets up Auth API
@@ -185,18 +195,114 @@ func registerPhotoRoutes(rg RouterGrouper, api PhotoAPIer) {
 	rg.Private().POST("/user/photo", api.PostUserPicture)
 }
 
-func setupLikeAPI(rg RouterGrouper, api LikeAPIer) {
-	api.InitialiseLikeHandler()
+func setupLikeAPI(rg RouterGrouper, api LikeAPIer, client *redis.Client) {
+	api.InitialiseLikeHandler(client)
 	registerLikeRoutes(rg, api)
 }
 
 type LikeAPIer interface {
-	InitialiseLikeHandler()
+	InitialiseLikeHandler(*redis.Client)
 	PostLike(*gin.Context)
 	DeleteLike(*gin.Context)
 }
 
 func registerLikeRoutes(rg RouterGrouper, api LikeAPIer) {
-	rg.Private().POST("/likes/:id", api.PostLike)
-	rg.Private().DELETE("/likes/:id", api.DeleteLike)
+	const likePathWithID = "/likes/:" + helpers.PostIDKey
+
+	rg.Private().POST(likePathWithID, api.PostLike)
+	rg.Private().DELETE(likePathWithID, api.DeleteLike)
+}
+
+func setupCommentAPI(rg RouterGrouper, api CommentAPIer, client *redis.Client) {
+	api.InitialiseCommentHandler(client)
+	registerCommentRoutes(rg, api)
+}
+
+type CommentAPIer interface {
+	InitialiseCommentHandler(*redis.Client)
+	CreateComment(*gin.Context)
+	// Generates comment feed
+	GetComments(*gin.Context)
+	UpdateComment(*gin.Context)
+	DeleteComment(*gin.Context)
+}
+
+func registerCommentRoutes(rg RouterGrouper, api CommentAPIer) {
+	const commentRouteWithID = helpers.CommentPath + "/:" + helpers.CommentIDKey
+
+	// Private routes
+	rg.Private().GET(helpers.CommentPath, api.GetComments)
+	rg.Private().POST(helpers.CommentPath, api.CreateComment)
+	rg.Private().PATCH(commentRouteWithID, api.UpdateComment)
+	rg.Private().DELETE(commentRouteWithID, api.DeleteComment)
+}
+
+func setupNotificationAPI(rg RouterGrouper, api NotificationAPIer, client *redis.Client) {
+	api.InitialiseNotificationHandler(client)
+	registerNotificationRoutes(rg, api)
+}
+
+type NotificationAPIer interface {
+	InitialiseNotificationHandler(*redis.Client)
+	GetNotifications(*gin.Context)
+}
+
+func registerNotificationRoutes(rg RouterGrouper, api NotificationAPIer) {
+	rg.Private().GET("/notifications", api.GetNotifications)
+}
+
+type CommunityAPIer interface {
+	InitialiseCommunityHandler()
+	CreateCommunity(*gin.Context)
+	GetCommunities(*gin.Context)
+	GetCommunityByName(*gin.Context)
+	UpdateCommunity(*gin.Context)
+}
+
+func setupCommunityAPI(rg RouterGrouper, api CommunityAPIer) {
+	api.InitialiseCommunityHandler()
+	registerCommunityRoutes(rg, api)
+}
+
+func registerCommunityRoutes(rg RouterGrouper, api CommunityAPIer) {
+	const communityPathWithName = helpers.CommunityPath + "/:" + helpers.CommunityNameKey
+	rg.Private().GET(helpers.CommunityPath, api.GetCommunities)
+	rg.Private().GET(communityPathWithName, api.GetCommunityByName)
+	rg.Private().POST(helpers.CommunityPath, api.CreateCommunity)
+	rg.Private().PATCH(communityPathWithName, api.UpdateCommunity)
+}
+
+type ProjectAPIer interface {
+	InitialiseProjectHandler()
+	CreateProject(*gin.Context)
+	DeleteProject(*gin.Context)
+	GetProjects(*gin.Context)
+	GetProjectByID(*gin.Context)
+	UpdateProject(*gin.Context)
+}
+
+func setupProjectAPI(rg RouterGrouper, api ProjectAPIer) {
+	api.InitialiseProjectHandler()
+	registerProjectRoutes(rg, api)
+}
+
+func registerProjectRoutes(rg RouterGrouper, api ProjectAPIer) {
+	const projectPathWithID = helpers.ProjectPath + "/:" + helpers.ProjectIDKey
+	rg.Private().GET(helpers.ProjectPath, api.GetProjects)
+	rg.Private().GET(projectPathWithID, api.GetProjectByID)
+	rg.Private().POST(helpers.ProjectPath, api.CreateProject)
+	rg.Private().DELETE(projectPathWithID, api.DeleteProject)
+	rg.Private().PATCH(projectPathWithID, api.UpdateProject)
+}
+
+func setupSearchAPI(rg RouterGrouper, api SearchAPIer) {
+	registerSearchRoutes(rg, api)
+}
+
+type SearchAPIer interface {
+	GetSearchResults(*gin.Context)
+}
+
+func registerSearchRoutes(rg RouterGrouper, api SearchAPIer) {
+	rg.Private().GET("/search", api.GetSearchResults)
 }

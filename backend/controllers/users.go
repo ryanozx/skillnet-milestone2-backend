@@ -6,11 +6,30 @@ import (
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	"github.com/ryanozx/skillnet-milestone2-backend/database"
-	"github.com/ryanozx/skillnet-milestone2-backend/helpers"
-	"github.com/ryanozx/skillnet-milestone2-backend/models"
+	"github.com/ryanozx/skillnet/database"
+	"github.com/ryanozx/skillnet/helpers"
+	"github.com/ryanozx/skillnet/models"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
+)
+
+// Errors
+const (
+	SuccessfulAccountCreationMsg = "Account successfully created and logged in"
+	SuccessfulAccountDeleteMsg   = "User successfully deleted"
+)
+
+// Messages
+var (
+	ErrBadEmail                 = errors.New("invalid email")
+	ErrBadPassword              = errors.New("password must have at least 8 characters, one uppercase letter, one lowercase letter, one number, and one special character")
+	ErrCannotDeleteUser         = errors.New("cannot delete user")
+	ErrCannotUpdateUser         = errors.New("cannot update user")
+	ErrCreateAccountNoCookie    = errors.New("account successfully created but cookie not set, please login later")
+	ErrMissingSignupCredentials = errors.New("missing username, password, or email")
+	ErrPasswordEncryptFailed    = errors.New("password encryption failed")
+	ErrUserNotFound             = errors.New("user not found")
+	ErrUsernameAlreadyExists    = errors.New("username already exists")
 )
 
 func (a *APIEnv) InitialiseUserHandler() {
@@ -26,6 +45,18 @@ func (a *APIEnv) CreateUser(ctx *gin.Context) {
 	// If request is badly formatted, return status code 400 Bad Request
 	if helpers.IsSignupUserCredsEmpty(userCredentials) {
 		helpers.OutputError(ctx, http.StatusBadRequest, ErrMissingSignupCredentials)
+		return
+	}
+
+	// If password does not meet requirements, return status code 400 Bad Request
+	if !helpers.ValidatePassword(userCredentials.Password) {
+		helpers.OutputError(ctx, http.StatusBadRequest, ErrBadPassword)
+		return
+	}
+
+	// If email is not validated, return status code 400 Bad Request
+	if !helpers.ValidateEmail(userCredentials.Email) {
+		helpers.OutputError(ctx, http.StatusBadRequest, ErrBadEmail)
 		return
 	}
 
@@ -58,16 +89,16 @@ func (a *APIEnv) CreateUser(ctx *gin.Context) {
 
 // Deletes user - assuming Delete Account is implemented
 func (a *APIEnv) DeleteUser(ctx *gin.Context) {
-	userID := helpers.GetUserIdFromContext(ctx)
+	userID := helpers.GetUserIDFromContext(ctx)
 	err := a.UserDBHandler.DeleteUser(userID)
 	// If user cannot be found in the database return status code 404 Status Not Found
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		helpers.OutputError(ctx, http.StatusNotFound, ErrUserNotFound)
 		return
 	}
-	// If user cannot be deleted for any other reason, return status code 403 Bad Request
+	// If user cannot be deleted for any other reason, return status code 501 Internal ServerError
 	if err != nil {
-		helpers.OutputError(ctx, http.StatusBadRequest, err)
+		helpers.OutputError(ctx, http.StatusInternalServerError, ErrCannotDeleteUser)
 		return
 	}
 	// If unable to invalidate the session on the server side, return with a status code
@@ -84,6 +115,7 @@ func (a *APIEnv) DeleteUser(ctx *gin.Context) {
 // Returns user's profile as seen by visitor
 func (a *APIEnv) GetProfile(ctx *gin.Context) {
 	username := helpers.GetUsernameFromContext(ctx)
+	viewerID := helpers.GetUserIDFromContext(ctx)
 
 	user, err := a.UserDBHandler.GetUserByUsername(username)
 	// If cannot find user in database, return status code 404 Not Found
@@ -91,13 +123,13 @@ func (a *APIEnv) GetProfile(ctx *gin.Context) {
 		helpers.OutputError(ctx, http.StatusNotFound, ErrUserNotFound)
 		return
 	}
-	profile := user.GetUserView()
+	profile := user.GetUserView(viewerID)
 	helpers.OutputData(ctx, profile)
 }
 
 // Returns user's own profile with private information
 func (a *APIEnv) GetSelfProfile(ctx *gin.Context) {
-	userID := helpers.GetUserIdFromContext(ctx)
+	userID := helpers.GetUserIDFromContext(ctx)
 	user, err := a.UserDBHandler.GetUserByID(userID)
 	// If cannot find use in database, return status code 404 Not Found
 	if err != nil {
@@ -109,7 +141,7 @@ func (a *APIEnv) GetSelfProfile(ctx *gin.Context) {
 
 // Updates user's profile
 func (a *APIEnv) UpdateUser(ctx *gin.Context) {
-	userID := helpers.GetUserIdFromContext(ctx)
+	userID := helpers.GetUserIDFromContext(ctx)
 	var inputUpdate models.User
 
 	// If request is badly formatted, return status code 400 Bad Request

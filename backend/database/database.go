@@ -5,8 +5,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/ryanozx/skillnet-milestone2-backend/helpers"
-	"github.com/ryanozx/skillnet-milestone2-backend/models"
+	"github.com/ryanozx/skillnet/helpers"
+	"github.com/ryanozx/skillnet/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -55,8 +55,7 @@ func establishConnection(env DataSourceNamer) (*gorm.DB, error) {
 // Performs migration automatically based on schemas specified in method body
 func autoMigrate(database *gorm.DB) {
 	log.Println("Running migrations")
-	database.AutoMigrate(&models.Post{})
-	database.AutoMigrate(&models.User{})
+	database.AutoMigrate(&models.Post{}, &models.User{}, &models.Like{}, &models.Comment{}, &models.Community{}, &models.Project{})
 	// Add more schemas above as necessary
 }
 

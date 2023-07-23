@@ -6,7 +6,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/ryanozx/skillnet-milestone2-backend/models"
+	"github.com/ryanozx/skillnet/models"
 )
 
 type BaseEnv struct {
@@ -146,12 +146,12 @@ func RetrieveBackendEnv() *BaseEnv {
 
 func SetModelClientAddress() {
 	clientEnv := RetrieveClientEnv()
-	models.ClientAddress = clientEnv.Host
+	models.ClientAddress = clientEnv.Address()
 	log.Println("Set client address to:", models.ClientAddress)
 }
 
 func SetModelBackendAddress() {
 	backendEnv := RetrieveBackendEnv()
-	models.BackendAddress = backendEnv.Host
+	models.BackendAddress = backendEnv.Address()
 	log.Println("Set backend address to:", models.BackendAddress)
 }
