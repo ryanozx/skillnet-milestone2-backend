@@ -51,10 +51,12 @@ func (s *serverConfig) setupRoutes() {
 // Sets up CORS to allow the frontend app to access resources
 func (s *serverConfig) configureCors() {
 	// Get address of frontend app from environmental variables
+	env := helpers.RetrieveClientEnv()
+	localClientAddress := env.Host
 
 	// Set up configuration and apply it to the router
 	corsConfig := cors.DefaultConfig()
-	corsConfig.AllowAllOrigins = true
+	corsConfig.AllowOrigins = []string{localClientAddress}
 	corsConfig.AllowCredentials = true
 
 	s.router.Use(cors.New(corsConfig))
